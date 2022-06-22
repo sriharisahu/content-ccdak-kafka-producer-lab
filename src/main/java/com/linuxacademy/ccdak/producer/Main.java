@@ -1,9 +1,11 @@
 package com.linuxacademy.ccdak.producer;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Properties;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -21,11 +23,9 @@ public class Main {
         
         Producer<String, String> producer = new KafkaProducer<>(props);
         
-        try {
-            File file = new File(Main.class.getClassLoader().getResource("sample_transaction_log.txt").getFile());
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String line; 
-            while ((line = br.readLine()) != null) {
+        try{
+            List<String> lines = Files.readAllLines(Path.of(ClassLoader.getSystemResource("sample_transaction_log.txt").toURI()), Charset.forName("UTF-8"));
+            for(String line: lines){
                 String[] lineArray = line.split(":");
                 String key = lineArray[0];
                 String value = lineArray[1];
@@ -34,8 +34,9 @@ public class Main {
                     producer.send(new ProducerRecord<>("apple_purchases", key, value));
                 }
             }
-            br.close();
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
         
